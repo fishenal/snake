@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Untitled</title>
+        <script src="jquery.js"></script>
+        <style type="text/css">
+            #stage{
+            	width:500px;
+            	height:500px;
+            	border:1px solid ;
+            	position:relative;
+            }
+            .i{
+            	width:10px;
+            	height:10px;
+            	float:left;
+            	background:#DDDDDD;
+            	position:absolute;
+            }
+            .snk{
+            	background:#FF0000;
+            }
+            .apl{
+            	background:#009966;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="stage">
+        	
+        </div>
+		
+		<div id="dash">
+			<h4>分数： <span id="score">0</span></h4>
+			<h5>游戏设定 * 宽高请在10-50之前</h5>
+			<p>宽度：<input id="xlength" type="number"/></p>
+			<p>高度：<input id="ylength" type="number"/></p>
+			<p>速度：
+				<select id="spd">
+					<option value="100">普通</option>
+					<option value="50">快速</option>
+					<option value="20">变态</option>
+				</select>
+			</p>
+			
+			<p><input type="button" value="开始游戏！" id="begin"/></p>
+		</div>
+        <script type="text/javascript">
+            var $stage = $('#stage');
+            var TOID;
+            
+            //点
+            function Point(x,y){
+            	this.x = x
+            	this.y = y
+            }
+            
+            
+            function SnakeGame(xlength,ylength,spd){
+            	this.xLength = xlength || 10;//面板x轴宽度
+            	this.yLength = ylength || 10;//面板y轴高度
+            	this.iWidth = 10;//一个格的宽度
+            	
+            	this.SPD = spd || 100;//ms
+            	this.APL;
+            	this.DIRECT = "R";
+            	this.STOP = false;
+            	this.SCORE = 0;
+            	this.PERSCORE = 20;
+            	
+            	var intx = Math.floor(this.xLength/2);
+            	var inty = Math.floor(this.yLength/2);
+            	
+            	//存放蛇的数组，第一个是头，最后一个是尾
+            	this.SNK = [
+	            	new Point(intx,inty),
+	            	new Point(intx,inty-1),
+	            	new Point(intx,inty-2)
+	            ]
+            }
+            
+            SnakeGame.prototype.int = function(){
+            	 //放格子
+	            for(var i = 0;i<this.xLength;i++){
+	            	for(var j = 0;j<this.yLength;j++){
+	            		$("<div>",{
+			            	"x":i,
+			            	"y":j,
+			            	"class":"i"
+			            }).css({
+			            	top:i*this.iWidth,
+			            	left:j*this.iWidth
+			            }).appendTo($stage);
+	            	}
+	            }
+	            
+	            //速度加分比率
+	            if(this.SPD === 100){
+	            	this.PERSCORE = 20
+	            }else if(this.SPD === 50){
+	            	this.PERSCORE = 50
+	            }else if(this.SPD === 20)(
+	            	this.PERSCORE = 100
+	            )
+	             
+	            //begin Game
+	            this.showSNK()
+            	this.showApple()
+            	this.runSNK()
+	            this.bindKey()
+            }
+            
+            //放蛇
+            SnakeGame.prototype.showSNK = function(){
+            	$('.snk').removeClass('snk');
+            	for(var i = 0;i<this.SNK.length;i++){
+            		var _$snk = $('.i[x='+this.SNK[i].x+'][y='+this.SNK[i].y+']');
+            		if(_$snk.hasClass('snk')){
+            			this.STOP = true;
+            			alert('追尾了')
+            		}else{
+            			_$snk.addClass('snk');
+            		}
+            	}
+            }
+            
+            //运行蛇
+            SnakeGame.prototype.runSNK = function(){
+            	if(this.STOP){
+            		return;
+            	}
+            	var _x = this.SNK[0].x,
+            		_y = this.SNK[0].y,
+            		_head;
+            	
+            	switch(this.DIRECT){
+            		case "R":
+            			if(_y + 1 >= this.yLength){
+            				_y = -1
+            			}
+            			_head = new Point(_x,_y+1);
+            			break;
+            		case "L":
+            			if(_y - 1 < 0){
+            				_y = this.yLength 
+            			}
+            			_head = new Point(_x,_y-1);
+            			break;
+            		case "T":
+            			if(_x - 1 < 0){
+            				_x = this.xLength 
+            			}
+            			_head = new Point(_x-1,_y);
+            			break;
+            		case "D":
+            			if(_x + 1 >= this.xLength){
+            				_x = -1
+            			}
+            			_head = new Point(_x+1,_y);
+            			break;
+            		default:
+            			return;
+            	}
+            	
+            	this.SNK.unshift(_head);
+            	
+            	if(this.APL.x !== _head.x || this.APL.y !== _head.y){
+            		this.SNK.pop();
+            	}else{
+            		this.showApple();
+            		this.addScore();
+            	}
+            	
+            	this.showSNK();
+            	
+            	TOID = setTimeout($.proxy(this.runSNK,this),this.SPD);
+            }
+            
+            SnakeGame.prototype.addScore = function(){
+            	this.SCORE += this.PERSCORE;
+            	$('#score').text(this.SCORE);
+            }
+            
+            SnakeGame.prototype.bindKey = function(){
+            	//37 <-  //38  ^   //39 ->  //40 v
+	            $(window).keydown($.proxy(function(e) {
+			        //e.preventDefault();
+			        if(e.keyCode == 37) {
+			        	e.preventDefault();
+			        	if(this.DIRECT == "L" || this.DIRECT == "R"){
+			        		return;
+			        	}
+			        	this.DIRECT = "L"
+			        }else if(e.keyCode == 38){
+			        	e.preventDefault();
+			        	if(this.DIRECT == "T" || this.DIRECT == "D"){
+			        		return;
+			        	}
+			        	this.DIRECT = "T"
+			        }else if(e.keyCode == 39){
+			        	e.preventDefault();
+			        	if(this.DIRECT == "L" || this.DIRECT == "R"){
+			        		return;
+			        	}
+			        	this.DIRECT = "R"
+			        }else if(e.keyCode == 40){
+			        	e.preventDefault();
+			        	if(this.DIRECT == "T" || this.DIRECT == "D"){
+			        		return;
+			        	}
+			        	this.DIRECT = "D"
+			        }
+			        
+			        return;
+			    },this)
+			   );
+            }
+            
+            //果子
+            SnakeGame.prototype.showApple = function(){
+            	var _rx = Math.floor(Math.random() * this.xLength),
+            		_ry = Math.floor(Math.random() * this.yLength);
+            		
+            	this.APL = new Point(_rx,_ry);
+            	
+            	var _$apl = $('.i[x='+this.APL.x+'][y='+this.APL.y+']');
+            	
+            	if(_$apl.hasClass('snk')){
+            		this.showApple()
+            	}else{
+            		$('.apl').removeClass('apl');
+            		_$apl.addClass('apl');
+            	}
+            	
+            }
+            
+            
+            $('#begin').click(function(){
+            	
+            	var _xlength = parseInt($('#xlength').val())
+            	
+            	var _ylength = parseInt($('#ylength').val())
+            	
+            	var _spd = parseInt($('#spd').val())
+            	
+            	if(_xlength>50) _xlength = 50;
+            	if(_ylength>50) _ylength = 50;
+            	if(_xlength<10) _xlength = 10;
+            	if(_ylength<10) _ylength = 10;
+            	
+            	//清除上一把
+            	clearTimeout(TOID);
+            	$stage.empty();
+            	
+            	var newGame = new SnakeGame(_xlength,_ylength,_spd);
+            	newGame.int();
+            })
+            
+        </script>
+    </body>
+</html>
