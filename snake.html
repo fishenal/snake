@@ -54,6 +54,7 @@
             function Point(x,y){
             	this.x = x
             	this.y = y
+            	this.$dom = $('.i[x='+this.x+'][y='+this.y+']')
             }
             
             
@@ -63,22 +64,12 @@
             	this.iWidth = 10;//一个格的宽度
             	
             	this.SPD = spd || 100;//ms
-            	this.APL;
+            	
             	this.DIRECT = "R";
             	this.STOP = false;
             	this.SCORE = 0;
             	this.PERSCORE = 20;
             	
-            	var intx = Math.floor(this.xLength/2);
-            	var inty = Math.floor(this.yLength/2);
-            	
-            	//存放蛇的数组，第一个是头，最后一个是尾
-            	this.SNK = [
-	            	new Point(intx,inty),
-	            	new Point(intx,inty-1),
-	            	new Point(intx,inty-2)
-	            ]
-	            this.tail;
             }
             
             SnakeGame.prototype.int = function(){
@@ -104,35 +95,22 @@
 	            }else if(this.SPD === 20)(
 	            	this.PERSCORE = 100
 	            )
+	            
+	            //存放蛇的数组，第一个是头，最后一个是尾
+            	this.SNK = [
+	            	new Point(Math.floor(this.xLength/2),Math.floor(this.yLength/2)),
+	            	new Point(Math.floor(this.xLength/2),Math.floor(this.yLength/2)-1),
+	            	new Point(Math.floor(this.xLength/2),Math.floor(this.yLength/2)-2)
+	            ]
 	             
-	            //begin Game
-	            this.showSNK()
-            	this.showApple()
-            	this.runSNK()
+	            //放置初始蛇
+	            for(var i = 0;i<this.SNK.length;i++){
+            		this.SNK[i].$dom.addClass('snk');
+            	}
+	            
+	            this.runSNK()
+	            this.showApple()
 	            this.bindKey()
-            }
-            
-            //放蛇
-            SnakeGame.prototype.showSNK = function(){
-            	//$('.snk').removeClass('snk');
-            	if(this.tail){
-            		$('.i[x='+this.tail.x+'][y='+this.tail.y+']').removeClass('snk');
-            	}
-            	
-            	for(var i = 0;i<this.SNK.length;i++){
-            		var _$snk = $('.i[x='+this.SNK[i].x+'][y='+this.SNK[i].y+']');
-            		
-            		if(_$snk.hasClass('snk')){
-            			if(i == 0 && _$snk.hasClass('snk')){
-            				this.STOP = true;
-            				alert('追尾了,得分:'+this.SCORE)
-            			}else{
-            				continue;
-            			}
-            		}else{
-            			_$snk.addClass('snk');
-            		}
-            	}
             }
             
             //运行蛇
@@ -140,50 +118,56 @@
             	if(this.STOP){
             		return;
             	}
+            	
             	var _x = this.SNK[0].x,
             		_y = this.SNK[0].y,
-            		_head;
+	           		_newhead;
             	
             	switch(this.DIRECT){
             		case "R":
             			if(_y + 1 >= this.yLength){
             				_y = -1
             			}
-            			_head = new Point(_x,_y+1);
+            			_newhead = new Point(_x,_y+1);
             			break;
             		case "L":
             			if(_y - 1 < 0){
             				_y = this.yLength 
             			}
-            			_head = new Point(_x,_y-1);
+            			_newhead = new Point(_x,_y-1);
             			break;
             		case "T":
             			if(_x - 1 < 0){
             				_x = this.xLength 
             			}
-            			_head = new Point(_x-1,_y);
+            			_newhead = new Point(_x-1,_y);
             			break;
             		case "D":
             			if(_x + 1 >= this.xLength){
             				_x = -1
             			}
-            			_head = new Point(_x+1,_y);
+            			_newhead = new Point(_x+1,_y);
             			break;
             		default:
             			return;
             	}
             	
-            	this.SNK.unshift(_head);
-            	
-            	if(this.APL.x !== _head.x || this.APL.y !== _head.y){
-            		this.tail = this.SNK.pop();
-            	}else{
+            	if(_newhead.$dom.hasClass('apl')){//如果吃到果子
             		this.showApple();
             		this.addScore();
+            	}else if(_newhead.$dom.hasClass('snk')){//如果碰到尾巴
+            		this.STOP = true;
+            		alert('追尾了,得分:'+this.SCORE)
+            	}else{//如果什么也没有
+            		var _tail = this.SNK.pop();
+            		_tail.$dom.removeClass('snk');
             	}
             	
-            	this.showSNK();
+            	//放置头部
+            	this.SNK.unshift(_newhead);
+            	_newhead.$dom.addClass('snk');
             	
+            	//重复
             	TOID = setTimeout($.proxy(this.runSNK,this),this.SPD);
             }
             
@@ -232,15 +216,13 @@
             	var _rx = Math.floor(Math.random() * this.xLength),
             		_ry = Math.floor(Math.random() * this.yLength);
             		
-            	this.APL = new Point(_rx,_ry);
+            	var _apl = new Point(_rx,_ry);
             	
-            	var _$apl = $('.i[x='+this.APL.x+'][y='+this.APL.y+']');
-            	
-            	if(_$apl.hasClass('snk')){
+            	if(_apl.$dom.hasClass('snk')){
             		this.showApple()
             	}else{
             		$('.apl').removeClass('apl');
-            		_$apl.addClass('apl');
+            		_apl.$dom.addClass('apl');
             	}
             	
             }
