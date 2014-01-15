@@ -78,6 +78,7 @@
 	            	new Point(intx,inty-1),
 	            	new Point(intx,inty-2)
 	            ]
+	            this.tail;
             }
             
             SnakeGame.prototype.int = function(){
@@ -113,12 +114,21 @@
             
             //放蛇
             SnakeGame.prototype.showSNK = function(){
-            	$('.snk').removeClass('snk');
+            	//$('.snk').removeClass('snk');
+            	if(this.tail){
+            		$('.i[x='+this.tail.x+'][y='+this.tail.y+']').removeClass('snk');
+            	}
+            	
             	for(var i = 0;i<this.SNK.length;i++){
             		var _$snk = $('.i[x='+this.SNK[i].x+'][y='+this.SNK[i].y+']');
+            		
             		if(_$snk.hasClass('snk')){
-            			this.STOP = true;
-            			alert('追尾了')
+            			if(i == 0 && _$snk.hasClass('snk')){
+            				this.STOP = true;
+            				alert('追尾了,得分:'+this.SCORE)
+            			}else{
+            				continue;
+            			}
             		}else{
             			_$snk.addClass('snk');
             		}
@@ -166,7 +176,7 @@
             	this.SNK.unshift(_head);
             	
             	if(this.APL.x !== _head.x || this.APL.y !== _head.y){
-            		this.SNK.pop();
+            		this.tail = this.SNK.pop();
             	}else{
             		this.showApple();
             		this.addScore();
