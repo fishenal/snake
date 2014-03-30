@@ -6,3 +6,7 @@ SNK-3
 ###PLAY　NOW!
 
 http://yudongmao.sinaapp.com/lib/snake/snake.html
+
+##Also on:
+
+http://codepen.io/fishenal/pen/qtkCg
